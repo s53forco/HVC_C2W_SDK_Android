@@ -56,6 +56,7 @@ import jp.co.omron.hvcw.ResultDirection;
 import jp.co.omron.hvcw.ResultFace;
 import jp.co.omron.hvcw.ResultGender;
 import jp.co.omron.hvcw.ResultRecognition;
+import jp.co.omron.plus_sensing.hvc_c2w_sample.HvcwApiWrap;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -79,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** HVC SDK ハンドル */
     private static HvcwApi api;
+    private static HvcwApiWrap apiWrap;
 
     // パスワードマスク切り替え用
     private EditText et1;
@@ -130,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "createHandle() failed.");
             finish();
         }
+
+        apiWrap = new HvcwApiWrap();
 
         // UIの設定
         initUIControl();
@@ -409,35 +413,12 @@ public class MainActivity extends AppCompatActivity {
     private void signup(String mailAddress) {
         addLog("signup ->");
 
-        String url = SERVICE_URL + "/api/v1/signup.php";
-        String apiKey = "apiKey=" + API_KEY;
-        String email = "email=" + mailAddress;
-        String params = apiKey + "&" + email;
-        Log.d(TAG, "url:" + url);
-        Log.d(TAG, "params:" + params);
-
-        PostMessageTask task = new PostMessageTask(new Listener() {
-            public void onReceived(String json) {
-                if (json != null) {
-                    Log.d(TAG, "json:" + json);
-
-                    try {
-                        JSONObject jsonObject = new JSONObject(json);
-                        JSONObject result = jsonObject.getJSONObject("result");
-                        String code = result.getString("code");
-                        String msg = result.getString("msg");
-                        addLog(String.format("response=%s(%s)", code, msg));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    Log.d(TAG, "json:null");
-                    addLog("error");
-                }
+        apiWrap.signup(mailAddress, API_KEY, new HvcwApiWrap.signupListener() {
+            @Override
+            public void onResult(final String code, final String msg) {
+                addLog(String.format("response=%s(%s)", code, msg));
             }
         });
-
-        task.execute(url, params);
     }
 
     /**
